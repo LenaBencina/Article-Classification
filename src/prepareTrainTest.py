@@ -105,14 +105,11 @@ def parseTextFromUrl(url):
     filePath = "../data/Articles/article" + urlNameID # define path for saving parsed article
 
     if path.exists(filePath): # if article already parsed
-        #print('if: ', filePath, ', ', url)
         file = open(filePath, "r") # read the file
         articleTextAll = file.read()
         file.close()
 
     else:
-        #print('else: ', filePath, ', ', url)
-
         # parse the article
         resp = requests.get(url)  # send request
         html_page = resp.content  # get content from url

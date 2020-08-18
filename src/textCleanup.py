@@ -25,7 +25,7 @@ def getRelevantTerms(text):
 
 
 
-##########################################################
+#######################################################################################
 
 # cleanup the article content and list of words
 def getTermsFromArticle(text):
