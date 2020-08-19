@@ -1,8 +1,12 @@
+# TF-IDF comments:
 # TF = (Frequency of the word in the sentence) / (Total number of words in the sentence)
-# IDF: (Total number of sentences (documents) + 1)/(Number of sentences (documents) containing the word + 1)
+# IDF = (Total number of sentences (documents) + 1)/(Number of sentences (documents) containing the word + 1)
+# TF-IDF = TF * [log(IDF) + 1]
 
 import pandas as pd
 import numpy as np
+
+
 
 # main function to get tf-idf table from article terms
 def getTfIdfTable(trainData, listOfRelevantTerms):
@@ -23,42 +27,39 @@ def getTfIdfTable(trainData, listOfRelevantTerms):
 
     # multiply tf table with idf to get tf-idf table
     tfIdfTable = docTermFreqTable * (IdfSeries.apply(np.log) + 1)
+    # todo: test different ways of tfidf
 
     return tfIdfTable
 
 
-#######################################################################################
+##################################################################################################################
 
-# count occurences of specific words in one article's text
+# count occurences of specific terms in one article's text
 def getTfTable(oneArticleTerms, listOfAllTerms):
 
-    # count all terms in one article
     tfList = list()
-    for term in listOfAllTerms: # for each term in list of all terms
-        termCount = oneArticleTerms.count(term) # count occurences of the term in the article
+
+    # for each term in list of all terms
+    for term in listOfAllTerms:
+
+        # count occurences of the term in the article
+        termCount = oneArticleTerms.count(term)
+
+        # divide count with # of terms in one article
         tf = termCount/len(oneArticleTerms)
         tfList.append(tf)
 
-    # divide list of counts with # of terms in one article
     return tfList
 
-# testing function
-#getTFtable(['A', 'B', 'A'], ['A', 'B', 'C', 'D' 'E', 'F'])
 
-
+# count documents that includes specific terms
 def getIdfList(oneTermTfs, numberOfAllDocs):
 
-    numberOfDocsWithTerm = sum(x > 0 for x in oneTermTfs) # number of documents that include this term
-    idf = (numberOfDocsWithTerm + 1)/(numberOfAllDocs + 1) # divide with number of all documents to get idf
+    # number of documents that include this term (tf not zero)
+    numberOfDocsWithTerm = sum(x > 0 for x in oneTermTfs)
 
-    return idf # TODO apply log
+    # divide with number of all documents to get idf (add 1 to prevent division with 0)
+    idf = (numberOfDocsWithTerm + 1)/(numberOfAllDocs + 1)
 
-
-
-
-# testing alltogether
-#testingData = pd.DataFrame({"articleTerms": [["A", "B", "A"], ["B", "C", "A", "B"], ["C", "C", "C", "C", "C"], ["A", "B", "E"]]})
-#testingData["id"] = [1,2,3,4]
-#tfidfTest = getTfIdfTable(testingData, ["A", "B", "C", "D", "E"])
-
+    return idf
 

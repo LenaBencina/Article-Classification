@@ -1,21 +1,19 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from os import path
 from bs4 import BeautifulSoup
 import requests
 import re
-import os
 
 
-# main function for preparing train and test data
-def getTrainTestData(fromFile):
 
-    if fromFile:
-        trainData = pd.read_csv("./data/parsedDataTrain.csv")
-        testData = pd.read_csv("./data/parsedDataTest.csv")
+# main function for getting the data from urls
+def getParsedData(fromFile):
+
+    if fromFile: # import already parsed data
+        parsedData = pd.read_csv("./data/parsedData.csv")
 
     else:
-        # import labeled data (4036 x 2)
+        # import labeled data with url and article class variables (4036 x 2)
         allLabeledData = pd.read_csv("./data/labeled_urls.tsv", sep="\t", header=None, names=["url", "class"])
 
         # filter labeled data (4034 x 2)
@@ -24,38 +22,34 @@ def getTrainTestData(fromFile):
         # apply function for parsing url to the url column
         filteredLabeledData["text"] = filteredLabeledData["url"].apply(parseTextFromUrl)
 
-        # remove articles without any content ( 3988 x 2 )
+        # remove articles without any content (3988 x 2)
         filteredLabeledData = filteredLabeledData[filteredLabeledData["text"].notnull()]
 
-        # split data to train and test set ( train: 3190 x 2, test: 798 x 2)
-        trainData, testData = train_test_split(filteredLabeledData, test_size=0.2, random_state=11)
+    return filteredLabeledData
 
-        # write to file train & test data
-        trainData.to_csv("./data/parsedDataTrain.csv", index=False)
-        testData.to_csv("./data/parsedDataTest.csv", index=False)
 
-    return trainData, testData
 
-##############################################################################
 
-# (1) function for filtering urls
+#####################################################################################################################
+
+# (1) filter urls
 def filterUrls(labeledData):
 
-    # first validate if article from zurnal
+    # first validate if article is from zurnal
     labeledData["isZurnal"] = labeledData["url"].apply(validateZurnal)
 
     # get id from url
     labeledData["id"] = labeledData["url"].apply(getID)
-    labeledData["isDuplicate"] = labeledData.duplicated(subset=["id"])
+    labeledData["isDuplicate"] = labeledData.duplicated(subset=["id"]) # mark duplicated ids
+    # todo: define a smarter way for validating correct/unique article/url
 
-
-    ############ print articles that will be removed ################################
-    removedNonZurnal = labeledData[labeledData.isZurnal == False]["url"].to_list()
+    ######### print articles that will be removed
+    removedNonZurnal = labeledData[labeledData.isZurnal==False]["url"].to_list()
     removedDuplicated = labeledData[labeledData.isDuplicate]["url"].to_list()
 
     print("Removed (non zurnal) articles: " + str(removedNonZurnal))
     print("Removed (duplicated) articles: " + str(removedDuplicated))
-    #################################################################################
+    ##########
 
     # remove non zurnal articles
     filteredData = labeledData[labeledData.isZurnal]
@@ -90,6 +84,7 @@ def getID(url):
     if urlID:
         return urlID[-1].replace("-", "")
 
+    # if there is no ID, not a valid article
     else:
         None
 
@@ -98,24 +93,25 @@ def getID(url):
 
 
 
-# (2) function for parsing title, subtitle and main content of the article
+# (2) parse title, subtitle and main content of the article from a given url
 def parseTextFromUrl(url):
 
     urlNameID = re.findall(r'-\d+', url)[-1]  # get article ID from url
     filePath = "../data/Articles/article" + urlNameID # define path for saving parsed article
 
     if path.exists(filePath): # if article already parsed
-        file = open(filePath, "r") # read the file
+        # read the file
+        file = open(filePath, "r")
         articleTextAll = file.read()
         file.close()
 
     else:
         # parse the article
-        resp = requests.get(url)  # send request
-        html_page = resp.content  # get content from url
+        resp = requests.get(url) # send request
+        html_page = resp.content # get content from url
         soup = BeautifulSoup(html_page, "html.parser")  # parse html
 
-        ## get relevant texts
+        ## get relevant texts; if there is no text, return empty string
         # 1. title
         titleH1 = soup.find("h1", class_="article__title")
         titleText = titleH1.text if titleH1 else ""
@@ -132,10 +128,10 @@ def parseTextFromUrl(url):
         # check if empty article or article without title
         if not titleText or not contentTextAllJoined:
             articleTextAll = None
-            print('EMPTY ARTICLE: ' + url)
+            print("EMPTY ARTICLE: " + url)
 
-        else: # join all text into one string
-
+        else:
+            # join all text into one string
             articleTextAll = " ".join((titleText, subtitleText, contentTextAllJoined))
 
             # save parsed content to file
