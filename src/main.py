@@ -62,6 +62,7 @@ def main():
 
 
 # todo: find a smarter way to choose final features
+# todo: PCA or some similar algorithm for demansionality reduction
 # function to get final terms, i.e. features out of the training data
 def getTermFeatures(trainData):
 
