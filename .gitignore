@@ -1,5 +1,7 @@
-.DS_Store/
+.DS_Store
+data/.DS_Store
 .idea/
 __pycache__/
 Testing scripts/
+Testing data/
 data/Articles/
