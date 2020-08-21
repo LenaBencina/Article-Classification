@@ -1,101 +1,42 @@
-from src import textCleanup, parser, tfidf, fit
+from src import textCleanup, parser, tfidf, featureSelection, fit, predict
 from sklearn.model_selection import train_test_split
-import collections
-import pandas as pd
-
+import pickle
 
 
 def main():
 
-    # # parse/import parsed articles
-    # parsedData = parser.getParsedData(fromFile=True)
-    #
-    # # split parsed data to train and test set (train: 3190 x 2, test: 798 x 2)
-    # trainData, testData = train_test_split(parsedData, test_size=0.2, random_state=11)
-    #
-    # # write to file train & test data
-    # trainData.to_csv("./data/parsedDataTrain.csv", index=False)
-    # testData.to_csv("./data/parsedDataTest.csv", index=False)
-    #
-    # # import from file
-    # trainData = pd.read_csv("./data/parsedDataTrain.csv")
-    # testData = pd.read_csv("./data/parsedDataTest.csv")
-    #
-    # # apply function for cleaning article content and splitting it into terms
-    # trainData["articleTerms"] = trainData["text"].apply(textCleanup.getRelevantTerms)
-    # testData["articleTerms"] = testData["text"].apply(textCleanup.getRelevantTerms)
-    #
-    # # save variable we want to predict
-    # trainDataY, testDataY = trainData["class"], testData["class"]
-    # trainDataY.to_csv("./data/trainDataY.csv", index=False)
-    # testDataY.to_csv("./data/testDataY.csv", index=False)
-    #
-    # # get final terms used as features
-    # finalTerms = getTermFeatures(trainData)
-    #
-    # # get tf-idf table from training data i.e. document terms
-    # trainDataTfidf = tfidf.getTfIdfTable(trainData, listOfRelevantTerms=finalTerms)
-    # testDataTfidf = tfidf.getTfIdfTable(testData, listOfRelevantTerms=finalTerms)
-    #
-    # # save - testing
-    # trainDataTfidf.to_csv("./data/trainDataTfidf.csv", index=False)
-    # testDataTfidf.to_csv("./data/testDataTfidf.csv", index=False)
+    # parse/import parsed articles
+    parsedData = parser.getParsedData(fromFile=True, newData=False, pathNewData=None)
 
-    # load train data
-    trainDataTfidf = pd.read_csv("./data/trainDataTfidf.csv")
-    trainDataY = pd.read_csv("./data/trainDataY.csv")
+    # split parsed data to train and test set (train: 3190 x 2, test: 798 x 2)
+    trainData, testData = train_test_split(parsedData, test_size=0.2, random_state=11)
 
-    # fit models on train data
-    fit.fitMain(trainDataTfidf, trainDataY)
+    # apply function for cleaning article content and splitting it into terms
+    trainData = trainData.assign(articleTerms=trainData["text"].apply(textCleanup.getRelevantTerms))
+    testData = testData.assign(articleTerms=testData["text"].apply(textCleanup.getRelevantTerms))
 
-    # load test data
-    # testDataTfidf = pd.read_csv("./data/testDataTfidf.csv")
-    # testDataY = pd.read_csv("./data/testDataY.csv")
+    # save variable we want to predict
+    trainDataY, testDataY = trainData["class"], testData["class"]
 
-    # predict
-    # todo: predict on the test set
-    # finalResults = predictMain(testDataTfidf, testDataY)
+    # get final terms used as features
+    finalTerms = featureSelection.getTermFeatures(trainData)
 
+    # save final terms for future predictions
+    with open("./data/finalTerms", "wb") as f:
+        pickle.dump(finalTerms, f)
 
+    # get tf-idf table from final terms defined on training data
+    trainDataTfidf = tfidf.getTfIdfTable(trainData, listOfRelevantTerms=finalTerms)
+    testDataTfidf = tfidf.getTfIdfTable(testData, listOfRelevantTerms=finalTerms)
 
-##############################################################################
+    # fit models on training data (return tuple ({models}, {cvResults}))
+    finalModels = fit.fitMain(trainDataTfidf, trainDataY)
 
+    # predict on test set and choose the best model
+    finalResults = predict.predict(finalModels[0], testDataTfidf, testDataY)
 
-# todo: find a smarter way to choose final features
-# todo: PCA or some similar algorithm for demansionality reduction
-# function to get final terms, i.e. features out of the training data
-def getTermFeatures(trainData):
-
-    # TESTING: class distribution
-    # classDistribution = trainData["class"].value_counts()
-    # classDistribution.plot.bar() # check distribution with barplot
-
-    # combine terms from all observations to one list
-    listOfAllTerms = [] # 582721 non-unique terms
-    for articleTerms in trainData["articleTerms"]:
-        listOfAllTerms.extend(articleTerms)
-
-    # create dictionary of all term frequencies
-    termFreq = collections.Counter(listOfAllTerms) # distribution of terms; 42773 distinct terms
-
-    # TESTING: distribution of frequencies (to decide how much we remove)
-    # termFreqDist = collections.Counter(termFreq.values())
-
-    # remove terms with overall frequency less than 10
-    filteredTermFreq = {x: count for x, count in termFreq.items() if count >= 10}  # 7697 terms left
-
-    # save only keys to get the list of final terms
-    finalTerms = list(filteredTermFreq.keys())
-
-    return finalTerms
+    return finalResults
 
 
 
 main()
-
-
-
-
-
-
-

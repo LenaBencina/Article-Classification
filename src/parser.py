@@ -5,27 +5,30 @@ import requests
 import re
 
 
-
+# todo: smarter way for dealing with new data
 # main function for getting the data from urls
-def getParsedData(fromFile):
+def getParsedData(fromFile, newData, pathNewData):
 
     if fromFile: # import already parsed data
-        parsedData = pd.read_csv("./data/parsedData.csv")
+        finalParsedData = pd.read_csv("./data/parsedData.csv")
 
     else:
-        # import labeled data with url and article class variables (4036 x 2)
-        allLabeledData = pd.read_csv("./data/labeled_urls.tsv", sep="\t", header=None, names=["url", "class"])
+        if newData:
+            allLabeledData = pd.read_csv(pathNewData, header=None, names=["url"])
+        else:
+            # import labeled data with url and article class variables (4036 x 2)
+            allLabeledData = pd.read_csv("./data/labeled_urls.tsv", sep="\t", header=None, names=["url", "class"])
 
         # filter labeled data (4034 x 2)
         filteredLabeledData = filterUrls(allLabeledData)
 
         # apply function for parsing url to the url column
-        filteredLabeledData["text"] = filteredLabeledData["url"].apply(parseTextFromUrl)
+        filteredLabeledData["text"] = filteredLabeledData["url"].apply(parseTextFromUrl, newData=newData)
 
         # remove articles without any content (3988 x 2)
-        filteredLabeledData = filteredLabeledData[filteredLabeledData["text"].notnull()]
+        finalParsedData = filteredLabeledData[filteredLabeledData["text"].notnull()]
 
-    return filteredLabeledData
+    return finalParsedData
 
 
 
@@ -94,19 +97,25 @@ def getID(url):
 
 
 # (2) parse title, subtitle and main content of the article from a given url
-def parseTextFromUrl(url):
+def parseTextFromUrl(url, newData):
 
     urlNameID = re.findall(r'-\d+', url)[-1]  # get article ID from url
-    filePath = "../data/Articles/article" + urlNameID # define path for saving parsed article
 
+    # define file path
+    if newData:
+        filePath = "../data/Articles/New/article" + urlNameID
+    else:
+        filePath = "../data/Articles/article" + urlNameID  # define path for saving parsed article
+
+
+    # get content
     if path.exists(filePath): # if article already parsed
         # read the file
         file = open(filePath, "r")
         articleTextAll = file.read()
         file.close()
 
-    else:
-        # parse the article
+    else: # parse the article
         resp = requests.get(url) # send request
         html_page = resp.content # get content from url
         soup = BeautifulSoup(html_page, "html.parser")  # parse html

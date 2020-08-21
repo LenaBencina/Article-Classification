@@ -28,13 +28,13 @@ def fitMain(trainDataTfidf, trainDataY):
     avgCvResults = averageCVresults(cvResults)
 
     # choose the best model according to accuracy and f1 measure
-    bestAlgorithms = chooseFinalModels(avgCvResults)
+    bestAlgorithmsMetrics = chooseFinalModels(avgCvResults)
 
     # fit the best model on full train data
-    finalModels = fitBestModels(bestAlgorithms, trainDataTfidf, trainDataY)
+    finalModels = fitBestModels(list(bestAlgorithmsMetrics.keys()), trainDataTfidf, trainDataY)
 
     # return final model for future prediction
-    return finalModels
+    return finalModels, bestAlgorithmsMetrics
 
 
 
@@ -43,29 +43,25 @@ def fitMain(trainDataTfidf, trainDataY):
 
 def fitBestModels(bestAlgorithms, trainDataTfidf, trainDataY):
 
-    # test
-    bestAlgorithms.append(tree)
-
     # define dictionary {algName: function to fit this alg}
     algToFunction = {"logReg": fitLogRegression, "tree": fitTree, "naiveBayes": fitNaiveBayes}
     algWithParamToFunction = {"knn": fitKnn, "rf": fitRandomForest, "svm": fitSvm}
 
     # if algorithm defined with parameter
-    finalModels = []
+    finalModels = {}
     for bestAlg in bestAlgorithms:
         if "-" in bestAlg:
             tmp = bestAlg.split("-")
             algorithm, parameter = tmp[0], tmp[1]
 
-            # fit with appropriate function (wtihout test data)
-            finalModel = algWithParamToFunction[algorithm](trainDataTfidf, trainDataY, None , None, parameter, finalFit = True)
-            finalModels.append(finalModel)
+            # fit with appropriate function (without test data)
+            finalModel = algWithParamToFunction[algorithm](trainDataTfidf, trainDataY, None, None, parameter, finalFit=True)
+            finalModels[bestAlg] = finalModel
 
         else:
-            finalModel = algToFunction[bestAlg](trainDataTfidf, trainDataY, None , None, finalFit = True)
+            finalModel = algToFunction[bestAlg](trainDataTfidf, trainDataY, None, None, finalFit=True)
+            finalModels[bestAlg] = finalModel
 
-
-    print(finalModel)
     return finalModels
 
 
@@ -79,18 +75,21 @@ def chooseFinalModels(avgCvResults):
     # name columns
     avgResultsTable.rename(columns={0: "accuracy", 1: "f1"}, inplace=True)
 
+    # report validation results
+    print("Average CV results:")
+    print(avgResultsTable.sort_values(by=["accuracy"]))
+
     # get 5 best by both measures
-    bestByAccuracy = list(avgResultsTable.nlargest(5, ['accuracy']).index.values)
-    bestByF1 = list(avgResultsTable.nlargest(5, ['f1']).index.values)
+    bestByAccuracy = list(avgResultsTable.nlargest(5, ["accuracy"]).index.values)
+    bestByF1 = list(avgResultsTable.nlargest(5, ["f1"]).index.values)
 
     # get best in both
     bestAlgorithms = list(set(bestByAccuracy) & set(bestByF1))
 
+    # get dict with metrics for each alg in bestAlgorithms
+    bestAlgorithmsMetrics = avgResultsTable.loc[bestAlgorithms].to_dict("index")
 
-    print(bestAlgorithms)
-
-
-    return bestAlgorithms
+    return bestAlgorithmsMetrics
 
 
 
@@ -232,8 +231,7 @@ def fitWithCrossValidation(trainDataTfidf, trainDataY, K, fromFile):
 
 
 
-            print(accuracyAll)
-            print(f1All)
+
 
         # save accuracy and f1 values to file
         with open(filePath, "wb") as f:
@@ -252,7 +250,7 @@ def fitKnn(trainDataTfidf, trainDataY, testDataTfidf, testDataY, k, finalFit):
 
     # for cross validation - without saving
     if not finalFit:
-        clf = KNeighborsClassifier(n_neighbors=k)
+        clf = KNeighborsClassifier(n_neighbors=int(k))
         knnModel = clf.fit(trainDataTfidf, trainDataY.values.ravel())
         predictedY = knnModel.predict(testDataTfidf)
         accuracy = accuracy_score(testDataY, predictedY, normalize=True) * 100
@@ -270,19 +268,12 @@ def fitKnn(trainDataTfidf, trainDataY, testDataTfidf, testDataY, k, finalFit):
             return knnModel
 
     else: # fit
-        clf = LogisticRegression()
+        clf = KNeighborsClassifier(n_neighbors=int(k))
         knnModel = clf.fit(trainDataTfidf, trainDataY.values.ravel())
         with open(filePath, "wb") as f:
             pickle.dump(knnModel, f)
             return knnModel
 
-    # calculate accuracy
-    # predictedY = knnModel.predict(testDataTfidf)
-    # accuracy = accuracy_score(testDataY, predictedY, normalize=True) * 100
-    # f1 = f1_score(testDataY, predictedY, average="macro")
-    # print("knn: " + str(accuracy))
-    #
-    #return accuracy, f1
 
 
 def fitLogRegression(trainDataTfidf, trainDataY, testDataTfidf, testDataY, finalFit):
@@ -313,13 +304,7 @@ def fitLogRegression(trainDataTfidf, trainDataY, testDataTfidf, testDataY, final
             pickle.dump(lrModel, f)
             return lrModel
 
-    # calculate accuracy
-    # predictedY = lrModel.predict(testDataTfidf)
-    # accuracy = accuracy_score(testDataY, predictedY, normalize=True) * 100
-    # f1 = f1_score(testDataY, predictedY, average="macro")
-    # print("lr: " + str(accuracy))
-    #
-    # return accuracy, f1
+
 
 
 def fitTree(trainDataTfidf, trainDataY, testDataTfidf, testDataY, finalFit):
@@ -336,7 +321,7 @@ def fitTree(trainDataTfidf, trainDataY, testDataTfidf, testDataY, finalFit):
 
 
     # define path to saved model
-    filePath = "../models/treeModel-" + str(randomSeed)
+    filePath = "./models/treeModel-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
@@ -351,13 +336,6 @@ def fitTree(trainDataTfidf, trainDataY, testDataTfidf, testDataY, finalFit):
             return treeModel
 
 
-    # calculate accuracy
-    # predictedY = treeModel.predict(testDataTfidf)
-    # accuracy = accuracy_score(testDataY, predictedY, normalize=True) * 100
-    # f1 = f1_score(testDataY, predictedY, average="macro")
-    # print("tree: " + str(accuracy))
-    #
-    # return accuracy, f1
 
 
 
@@ -365,7 +343,7 @@ def fitRandomForest(trainDataTfidf, trainDataY, testDataTfidf, testDataY, number
 
     # for cross validation - without saving
     if not finalFit:
-        clf = RandomForestClassifier(n_estimators=numberOfTrees, random_state=11)
+        clf = RandomForestClassifier(n_estimators=int(numberOfTrees), random_state=randomSeed)
         rfModel = clf.fit(trainDataTfidf, trainDataY.values.ravel())
         predictedY = rfModel.predict(testDataTfidf)
         accuracy = accuracy_score(testDataY, predictedY, normalize=True) * 100
@@ -374,7 +352,7 @@ def fitRandomForest(trainDataTfidf, trainDataY, testDataTfidf, testDataY, number
         return accuracy, f1
 
     # define path to saved model
-    filePath = "../models/rfModel" + str(numberOfTrees) + "-" + str(randomSeed)
+    filePath = "./models/rfModel" + str(numberOfTrees) + "-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
@@ -382,20 +360,13 @@ def fitRandomForest(trainDataTfidf, trainDataY, testDataTfidf, testDataY, number
             return rfModel
 
     else: # fit
-        clf = RandomForestClassifier(n_estimators=numberOfTrees, random_state=11)
+        clf = RandomForestClassifier(n_estimators=int(numberOfTrees), random_state=randomSeed)
         rfModel = clf.fit(trainDataTfidf, trainDataY.values.ravel())
         with open(filePath, "wb") as f:
             pickle.dump(rfModel, f)
             return rfModel
 
 
-    # calculate accuracy
-    # predictedY = rfModel.predict(testDataTfidf)
-    # accuracy = accuracy_score(testDataY, predictedY, normalize=True) * 100
-    # f1 = f1_score(testDataY, predictedY, average="macro")
-    # print("rf (" + str(numberOfTrees) + "): " + str(accuracy))
-
-    return accuracy, f1
 
 
 
@@ -414,12 +385,12 @@ def fitSvm(trainDataTfidf, trainDataY, testDataTfidf, testDataY, kernel, finalFi
 
 
     # define path to saved model
-    filePath = "../models/svmModel" + kernel.capitalize() + "-" + str(randomSeed)
+    filePath = "./models/svmModel" + kernel.capitalize() + "-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
             svmModel = pickle.load(f)
-            return fitSvm()
+            return svmModel
 
 
     else: # fit
@@ -430,13 +401,6 @@ def fitSvm(trainDataTfidf, trainDataY, testDataTfidf, testDataY, kernel, finalFi
             return svmModel
 
 
-    # calculate accuracy
-    # predictedY = svmModel.predict(testDataTfidf)
-    # accuracy = accuracy_score(testDataY, svmModel.predict(testDataTfidf), normalize=True) * 100
-    # f1 = f1_score(testDataY, predictedY, average="macro")
-    # print("svm (" + kernel + "): " + str(accuracy))
-    #
-    # return accuracy, f1
 
 
 
@@ -455,7 +419,7 @@ def fitNaiveBayes(trainDataTfidf, trainDataY, testDataTfidf, testDataY, finalFit
         return accuracy, f1
 
     # define path to saved model
-    filePath = "../models/naiveBayes" + "-" + str(randomSeed)
+    filePath = "./models/naiveBayes" + "-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
@@ -471,13 +435,6 @@ def fitNaiveBayes(trainDataTfidf, trainDataY, testDataTfidf, testDataY, finalFit
             return nbModel
 
 
-    # calculate accuracy
-    # predictedY = nbModel.predict(testDataTfidf)
-    # accuracy = accuracy_score(testDataY, predictedY, normalize=True) * 100
-    # f1 = f1_score(testDataY, predictedY, average="macro")
-    # print("nb: " + str(accuracy))
-    #
-    # return accuracy, f1
 
 
 
