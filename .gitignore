@@ -5,4 +5,4 @@ __pycache__/
 Testing scripts/
 Testing data/
 data/Articles/*
-data/Articles/README
+!data/Articles/README
