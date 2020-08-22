@@ -4,4 +4,5 @@ data/.DS_Store
 __pycache__/
 Testing scripts/
 Testing data/
-data/Articles/
+data/Articles/*
+data/Articles/README
