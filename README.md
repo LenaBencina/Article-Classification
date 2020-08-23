@@ -57,7 +57,7 @@ This repo consist of:
 
 ### (1) helpers folder
 
-**parser.py** - script for validating URLs, parsing content from URLs and saving the content into **data/Article/** by its ID (parsed from the URL string)
+**parser.py** - script for validating URLs, parsing content from URLs and saving the content into **data/articles/** by its ID (parsed from the URL string)
 Note: when calling **parser**, there are two options available; parsing the articles (fromFile=False) or reading already parsed articles (fromFile=True)
 
 **textCleanup.py** - script for cleaning text (article's content); removing non-word characters, double spaces, standalone numbers, 
@@ -76,7 +76,7 @@ with the best accuracy and F1 values)
 
 ### (2) data folder
 
-**Article/** - folder for saving all the parsed articles (each article is saved by its ID parsed from its URL)
+**articles/** - folder for saving all the parsed articles (each article is saved by its ID parsed from its URL)
 
 **labeled_urls.tsv** - initial input file with "url \t articleClass" per row
 
