@@ -1,4 +1,4 @@
-data/Articles/ is a folder for stashing all the parsed articles saved with its IDs defined in the URL string (article-"ID")
+data/articles/ is a folder for stashing all the parsed articles saved with its IDs defined in the URL string (article-"ID")
 
 
 (1)
@@ -16,4 +16,4 @@ After you parse the articles, you can then switch to reading the parsed articles
 
 (2)
 
-Similarly set the fromFile argument according to your needs when running the src/parser from predictFinal.main.
+Similarly set the fromFile argument according to your needs when running the src/parser from finalPrediction.main.
