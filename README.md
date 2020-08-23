@@ -16,6 +16,10 @@ nltk.download('stopwords')
 
 Once installed, you can remove it.
 
+### Other requirements
+
+For other requirements see the requirements.yml file.
+
 
 ### Description
 
