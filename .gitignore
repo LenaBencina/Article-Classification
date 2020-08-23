@@ -4,8 +4,8 @@ data/.DS_Store
 __pycache__/
 Testing scripts/
 Testing data/
-data/Articles/*
-!data/Articles/README.md
-!data/Articles/New
-data/Articles/New/*
-!data/Articles/New/README.md
+data/articles/*
+!data/articles/README.md
+!data/articles/New
+data/articles/New/*
+!data/articles/New/README.md

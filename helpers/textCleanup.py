@@ -3,8 +3,6 @@ from nltk.corpus import stopwords
 import re
 import lemmagen.lemmatizer
 from lemmagen.lemmatizer import Lemmatizer
-# nltk.download('punkt') RUN
-# nltk.download('stopwords') RUN
 
 
 

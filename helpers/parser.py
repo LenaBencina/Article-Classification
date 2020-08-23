@@ -3,6 +3,7 @@ from os import path
 from bs4 import BeautifulSoup
 import requests
 import re
+import os
 
 
 # todo: smarter way for dealing with new data
@@ -10,14 +11,14 @@ import re
 def getParsedData(fromFile, newData, pathNewData):
 
     if fromFile: # import already parsed data
-        finalParsedData = pd.read_csv("./data/parsedData.csv")
+        finalParsedData = pd.read_csv(os.path.dirname(__file__) + "/../data/parsedData.csv")
 
     else:
         if newData:
             allLabeledData = pd.read_csv(pathNewData, header=None, names=["url"])
         else:
             # import labeled data with url and article class variables (4036 x 2)
-            allLabeledData = pd.read_csv("./data/labeled_urls.tsv", sep="\t", header=None, names=["url", "class"])
+            allLabeledData = pd.read_csv(os.path.dirname(__file__) + "/../data/labeledUrls.tsv", sep="\t", header=None, names=["url", "class"])
 
         # filter labeled data (4034 x 2)
         filteredLabeledData = filterUrls(allLabeledData)
@@ -103,9 +104,9 @@ def parseTextFromUrl(url, newData):
 
     # define file path
     if newData:
-        filePath = "../data/Articles/New/article" + urlNameID
+        filePath = os.path.dirname(__file__) + "/../data/articles/New/article" + urlNameID
     else:
-        filePath = "../data/Articles/article" + urlNameID  # define path for saving parsed article
+        filePath = os.path.dirname(__file__) + "/../data/articles/article" + urlNameID  # define path for saving parsed article
 
 
     # get content

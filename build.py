@@ -1,6 +1,13 @@
-from src import textCleanup, parser, tfidf, featureSelection, fit, predict
+from helpers import textCleanup, parser, tfidf, featureSelection, fit, predict
 from sklearn.model_selection import train_test_split
 import pickle
+import nltk
+import os
+
+# can be removed after the first run
+#nltk.download("punkt")
+#nltk.download("stopwords")
+
 
 
 def main():
@@ -22,7 +29,7 @@ def main():
     finalTerms = featureSelection.getTermFeatures(trainData)
 
     # save final terms for future predictions
-    with open("./data/finalTerms", "wb") as f:
+    with open("data/finalTerms", "wb") as f:
         pickle.dump(finalTerms, f)
 
     # get tf-idf table from final terms defined on training data

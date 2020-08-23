@@ -1,7 +1,7 @@
 import pandas as pd
 import pickle
-from datetime import datetime
 from os import path
+import os
 
 # ml libraries
 from sklearn.neighbors import KNeighborsClassifier
@@ -133,7 +133,7 @@ def fitWithCrossValidation(trainDataTfidf, trainDataY, K, fromFile):
 
 
     # define filepath for saved results (for later checking)
-    filePath = "./data/validationResults"
+    filePath = os.path.dirname(__file__) + "/../data/validationResults"
 
     if fromFile:
         with open(filePath, "rb") as f:
@@ -260,7 +260,7 @@ def fitKnn(trainDataTfidf, trainDataY, testDataTfidf, testDataY, k, finalFit):
 
 
     # define path to saved model
-    filePath = "./models/knnModel-" + str(randomSeed)
+    filePath = os.path.dirname(__file__) + "/../models/knnModel-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
@@ -290,7 +290,7 @@ def fitLogRegression(trainDataTfidf, trainDataY, testDataTfidf, testDataY, final
 
 
     # define path to saved model
-    filePath = "./models/logRegressionModel-" + str(randomSeed)
+    filePath = os.path.dirname(__file__) + "/../models/logRegressionModel-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
@@ -321,7 +321,7 @@ def fitTree(trainDataTfidf, trainDataY, testDataTfidf, testDataY, finalFit):
 
 
     # define path to saved model
-    filePath = "./models/treeModel-" + str(randomSeed)
+    filePath = os.path.dirname(__file__) + "/../models/treeModel-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
@@ -352,7 +352,7 @@ def fitRandomForest(trainDataTfidf, trainDataY, testDataTfidf, testDataY, number
         return accuracy, f1
 
     # define path to saved model
-    filePath = "./models/rfModel" + str(numberOfTrees) + "-" + str(randomSeed)
+    filePath = os.path.dirname(__file__) + "/../models/rfModel" + str(numberOfTrees) + "-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
@@ -385,7 +385,7 @@ def fitSvm(trainDataTfidf, trainDataY, testDataTfidf, testDataY, kernel, finalFi
 
 
     # define path to saved model
-    filePath = "./models/svmModel" + kernel.capitalize() + "-" + str(randomSeed)
+    filePath = os.path.dirname(__file__) + "/../models/svmModel" + kernel.capitalize() + "-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:
@@ -419,7 +419,7 @@ def fitNaiveBayes(trainDataTfidf, trainDataY, testDataTfidf, testDataY, finalFit
         return accuracy, f1
 
     # define path to saved model
-    filePath = "./models/naiveBayes" + "-" + str(randomSeed)
+    filePath = os.path.dirname(__file__) + "/../models/naiveBayes" + "-" + str(randomSeed)
 
     if path.exists(filePath):
         with open(filePath, "rb") as f:

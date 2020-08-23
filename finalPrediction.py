@@ -1,25 +1,24 @@
-from src import textCleanup, parser, tfidf
+from helpers import textCleanup, parser, tfidf
 import pickle
 from sklearn.metrics import accuracy_score
-
 
 def main():
 
     # parse/import parsed articles
-    parsedData = parser.getParsedData(fromFile=False, newData=True, pathNewData="../data/unlabeled_urls_test.csv")
+    parsedData = parser.getParsedData(fromFile=False, newData=True, pathNewData="data/unlabeledUrlsForNewPredictions.csv")
 
     # apply function for cleaning article content and splitting it into terms
     parsedData = parsedData.assign(articleTerms=parsedData["text"].apply(textCleanup.getRelevantTerms))
 
     # import final terms for calculating tfidf
-    with open("../data/finalTerms", "rb") as f:
+    with open("data/finalTerms", "rb") as f:
         finalTerms = pickle.load(f)
 
     # get tf-idf table from training data i.e. document terms
     tfidfData = tfidf.getTfIdfTable(parsedData, listOfRelevantTerms=finalTerms)
 
     # predict article class
-    with open("../models/svmModelSigmoid-11", "rb") as f:
+    with open("models/svmModelSigmoid-11", "rb") as f:
         model = pickle.load(f)
 
 
@@ -33,11 +32,17 @@ def main():
     # calculate accuracy
     accuracy = accuracy_score(finalTable["actualClass"], finalTable["predictedClass"], normalize=True) * 100
 
+    # report predictions
+    print("\n Prediction results:")
+    print(finalTable)
+
     # report accuracy
-    print("Accuracy: " + str(accuracy))
+    print("\n Accuracy: " + str(accuracy))
 
-    return finalTable
+    # save final table
+    finalTable.to_csv("data/finalPredictions.csv", index=False)
 
+    return
 
 
 
