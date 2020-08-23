@@ -6,3 +6,5 @@ Testing scripts/
 Testing data/
 data/Articles/*
 !data/Articles/README
+!data/Articles/New
+data/Articles/New*
